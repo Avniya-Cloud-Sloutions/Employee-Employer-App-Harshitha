@@ -248,6 +248,23 @@ app.delete("/delete-profile/:id", (req, res) => {
     res.json({ status: "success", message: "Profile deleted successfully" });
   });
 });
+// -------------------- View Profile by id --------------------
+app.get("/view-profile-by-id/:id", (req, res) => {
+  const id = req.params.id;
+
+  db.query("SELECT * FROM profiles WHERE id = ?", [id], (err, data) => {
+    if (err) {
+      return res.status(500).json({ status: "error", message: "Database error", error: err });
+    }
+
+    if (data.length === 0) {
+      return res.status(404).json({ status: "failed", message: "Profile not found" });
+    }
+
+    res.json(data[0]);
+  });
+});
+
 
 // -------------------- Start Server --------------------
 const PORT = 8081;

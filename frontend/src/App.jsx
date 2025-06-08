@@ -12,6 +12,7 @@ import DashboardEmployee from "./pages/DashboardEmployee";
 import DashboardEmployer from "./pages/DashboardEmployer";
 import Header from "./components/Header";
 import UpdateProfile from "./pages/UpdateProfile";
+import SharedProfile from "./pages/SharedProfile";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -73,6 +74,7 @@ function App() {
           path="/update-profile/:id"
           element={user ? <UpdateProfile /> : <Navigate to="/login" />}
         />
+        <Route path="/shared-profile/:id" element={<SharedProfile />} />
       </Routes>
     </Router>
   );
