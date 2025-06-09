@@ -4,8 +4,15 @@ import axios from "axios";
 export default function ViewProfiles() {
   const [profiles, setProfiles] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [modalProfile, setModalProfile] = useState(null); // Contact modal
-  const [viewModalProfile, setViewModalProfile] = useState(null); // View details modal
+  const [modalProfile, setModalProfile] = useState(null);
+  const [viewModalProfile, setViewModalProfile] = useState(null);
+
+  // Search filters
+  const [searchName, setSearchName] = useState("");
+  const [searchTitle, setSearchTitle] = useState("");
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchCity, setSearchCity] = useState("");
+
   const profilesPerPage = 6;
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -19,10 +26,18 @@ export default function ViewProfiles() {
       });
   }, []);
 
-  const totalPages = Math.ceil(profiles.length / profilesPerPage);
+  // Filter logic
+  const filteredProfiles = profiles.filter((profile) =>
+    (profile.full_name || "").toLowerCase().includes(searchName.toLowerCase()) &&
+    (profile.professional_title || "").toLowerCase().includes(searchTitle.toLowerCase()) &&
+    (profile.email || "").toLowerCase().includes(searchEmail.toLowerCase()) &&
+    (profile.city || "").toLowerCase().includes(searchCity.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredProfiles.length / profilesPerPage);
   const indexOfLast = currentPage * profilesPerPage;
   const indexOfFirst = indexOfLast - profilesPerPage;
-  const currentProfiles = profiles.slice(indexOfFirst, indexOfLast);
+  const currentProfiles = filteredProfiles.slice(indexOfFirst, indexOfLast);
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this profile?")) {
@@ -47,11 +62,9 @@ export default function ViewProfiles() {
     alert("Profile link copied!");
   };
 
-  // Contact modal handlers
   const openContactModal = (profile) => setModalProfile(profile);
   const closeContactModal = () => setModalProfile(null);
 
-  // View details modal handlers
   const openViewModal = (profile) => setViewModalProfile(profile);
   const closeViewModal = () => setViewModalProfile(null);
 
@@ -59,7 +72,39 @@ export default function ViewProfiles() {
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-4xl text-center font-bold text-indigo-700 mb-8">Employee Profiles</h1>
 
-      {/* Profile Cards */}
+      {/* Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search by Name"
+          className="px-4 py-2 rounded border"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Search by Title"
+          className="px-4 py-2 rounded border"
+          value={searchTitle}
+          onChange={(e) => setSearchTitle(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Search by Email"
+          className="px-4 py-2 rounded border"
+          value={searchEmail}
+          onChange={(e) => setSearchEmail(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Search by City"
+          className="px-4 py-2 rounded border"
+          value={searchCity}
+          onChange={(e) => setSearchCity(e.target.value)}
+        />
+      </div>
+
+      {/* Profiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentProfiles.map((profile) => (
           <div
@@ -67,21 +112,11 @@ export default function ViewProfiles() {
             className="bg-white shadow-md rounded-xl p-5 border-t-4 border-indigo-600"
           >
             <h2 className="text-2xl font-semibold mb-1 capitalize">{profile.full_name}</h2>
-            <p className="text-sm text-gray-700">
-              <strong>Title:</strong> {profile.professional_title}
-            </p>
-            <p className="text-sm text-gray-700">
-              <strong>Experience:</strong> {profile.experience} yrs
-            </p>
-            <p className="text-sm text-gray-700">
-              <strong>City:</strong> {profile.city}
-            </p>
-            <p className="text-sm text-gray-700">
-              <strong>Email:</strong> {profile.email}
-            </p>
-            <p className="text-sm text-gray-700">
-              <strong>Phone:</strong> {profile.phone}
-            </p>
+            <p><strong>Title:</strong> {profile.professional_title}</p>
+            <p><strong>Experience:</strong> {profile.experience} yrs</p>
+            <p><strong>City:</strong> {profile.city}</p>
+            <p><strong>Email:</strong> {profile.email}</p>
+            <p><strong>Phone:</strong> {profile.phone}</p>
 
             {profile.resume && (
               <a
@@ -93,7 +128,6 @@ export default function ViewProfiles() {
               </a>
             )}
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 mt-4">
               <button
                 onClick={() => openViewModal(profile)}
@@ -157,44 +191,56 @@ export default function ViewProfiles() {
 
       {/* Contact Modal */}
       {modalProfile && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-80 text-center">
-            <h3 className="text-xl font-semibold mb-2 text-indigo-700">
+       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
+        <div className="bg-white p-6 rounded-lg shadow-xl w-96">
+          <h3 className="text-2xl font-semibold mb-4 text-indigo-700 text-center">
               Contact {modalProfile.full_name}
-            </h3>
-            <p className="text-gray-700 mb-1">
-              <strong>Email:</strong> {modalProfile.email}
-            </p>
-            <p className="text-gray-700 mb-1">
-              <strong>Phone:</strong> {modalProfile.phone}
-            </p>
-            <p className="text-gray-700 mb-4">
-              <strong>Alternate Phone:</strong> {modalProfile.alternate_phone || "N/A"}
-            </p>
-            <a
-              href={`https://wa.me/${modalProfile.phone}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block mb-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              WhatsApp Chat
-            </a>
-            <br />
-            <button
-              onClick={closeContactModal}
-              className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+          </h3>
 
-      {/* View Details Modal */}
+       <div className="space-y-3 text-left">
+        <div className="flex justify-between">
+          <span className="font-medium text-gray-700">Email:</span>
+          <span className="text-gray-800">{modalProfile.email}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium text-gray-700">Phone:</span>
+          <span className="text-gray-800">{modalProfile.phone}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-medium text-gray-700">Alternate Phone:</span>
+          <span className="text-gray-800">{modalProfile.alternate_phone || "N/A"}</span>
+        </div>
+       </div>
+
+      <a
+        href={`https://wa.me/${modalProfile.phone}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-6 w-full inline-flex justify-center items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+      >
+        <img
+          src="https://img.icons8.com/color/48/000000/whatsapp--v1.png"
+          alt="WhatsApp"
+          className="w-5 h-5"
+        />
+        WhatsApp 
+      </a>
+
+      <button
+        onClick={closeContactModal}
+        className="mt-4 w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+
+      {/* View Modal */}
       {viewModalProfile && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto text-left">
-            {/* Profile Photo */}
             {viewModalProfile.profile_photo && (
               <div className="flex justify-center mb-4">
                 <img
@@ -204,70 +250,40 @@ export default function ViewProfiles() {
                 />
               </div>
             )}
-
             <h3 className="text-2xl font-semibold mb-4 text-indigo-700">
               {viewModalProfile.full_name}'s Profile
             </h3>
-
-            <p>
-              <strong>Full Name:</strong> {viewModalProfile.full_name}
-            </p>
-            <p>
-              <strong>Gender:</strong> {viewModalProfile.gender}
-            </p>
-            <p>
-              <strong>Professional Title:</strong> {viewModalProfile.professional_title}
-            </p>
-            <p>
-              <strong>Experience:</strong> {viewModalProfile.experience} years
-            </p>
-            <p>
-              <strong>Qualification:</strong> {viewModalProfile.qualification}
-            </p>
-            <p>
-              <strong>City:</strong> {viewModalProfile.city}
-            </p>
-            <p>
-              <strong>Email:</strong> {viewModalProfile.email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {viewModalProfile.phone}
-            </p>
-            <p>
-              <strong>GitHub:</strong>{" "}
-              {viewModalProfile.github_link ? (
+            <p><strong>Full Name:</strong> {viewModalProfile.full_name}</p>
+            <p><strong>Gender:</strong> {viewModalProfile.gender}</p>
+            <p><strong>Title:</strong> {viewModalProfile.professional_title}</p>
+            <p><strong>Experience:</strong> {viewModalProfile.experience} yrs</p>
+            <p><strong>Qualification:</strong> {viewModalProfile.qualification}</p>
+            <p><strong>City:</strong> {viewModalProfile.city}</p>
+            <p><strong>Email:</strong> {viewModalProfile.email}</p>
+            <p><strong>Phone:</strong> {viewModalProfile.phone}</p>
+            <p><strong>GitHub:</strong> {
+              viewModalProfile.github_link ? (
                 <a
                   href={viewModalProfile.github_link}
+                  className="text-indigo-600 underline"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-600 underline"
                 >
                   {viewModalProfile.github_link}
                 </a>
-              ) : (
-                "N/A"
-              )}
-            </p>
-            <p>
-              <strong>Technical Languages:</strong>{" "}
-              {viewModalProfile.technical_languages || "N/A"}
-            </p>
-
+              ) : "N/A"
+            }</p>
+            <p><strong>Technical Languages:</strong> {viewModalProfile.technical_languages || "N/A"}</p>
             {viewModalProfile.resume && (
               <a
-                 href={`http://localhost:8081/uploads/${viewModalProfile.resume}`}
-                 target="_blank"
-                 rel="noopener noreferrer"
-                 className="text-indigo-600 hover:underline flex items-center mt-2"
+                href={`http://localhost:8081/uploads/${viewModalProfile.resume}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 hover:underline flex items-center mt-2"
               >
-                 <span>View Resume</span>
-                 <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                 <path d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 01-.708 1.707H16v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h7V3.707a1 1 0 01.293-.707z" />
-                 </svg>
+                <span>View Resume</span>
               </a>
-
             )}
-
             <button
               onClick={closeViewModal}
               className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
